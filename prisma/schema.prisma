@@ -1,0 +1,168 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  PROFESSOR
+  CLIENT
+}
+
+enum CourseStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  role          UserRole
+  firstName     String
+  lastName      String
+  phone         String?
+  address       String?
+  professorType String?   // Type de professeur (ex: "Langue", "Musique", "Sciences", etc.)
+  bio           String?   // Biographie/description
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations pour les professeurs
+  professorCourses  Course[]       @relation("ProfessorCourses")
+  professorInvoices Invoice[]      @relation("ProfessorInvoices")
+  professorQuotes   Quote[]        @relation("ProfessorQuotes")
+
+  // Relations pour les clients
+  clientCourses     Course[]       @relation("ClientCourses")
+  clientInvoices    Invoice[]      @relation("ClientInvoices")
+  clientQuotes      Quote[]        @relation("ClientQuotes")
+
+  // Messages
+  sentMessages      Message[]      @relation("SentMessages")
+  receivedMessages  Message[]      @relation("ReceivedMessages")
+
+  @@index([email])
+  @@index([role])
+}
+
+model Course {
+  id          String       @id @default(cuid())
+  title       String
+  description String?
+  subject     String
+  date        DateTime?
+  duration    Int          // Durée en minutes
+  price       Float
+  status      CourseStatus @default(SCHEDULED)
+  location    String?
+  notes       String?
+
+  professorId String
+  professor   User         @relation("ProfessorCourses", fields: [professorId], references: [id], onDelete: Cascade)
+
+  clientId    String
+  client      User         @relation("ClientCourses", fields: [clientId], references: [id], onDelete: Cascade)
+
+  invoiceId   String?
+  invoice     Invoice?     @relation(fields: [invoiceId], references: [id])
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([professorId])
+  @@index([clientId])
+  @@index([date])
+  @@index([status])
+}
+
+model Invoice {
+  id          String        @id @default(cuid())
+  invoiceNumber String      @unique
+  status      InvoiceStatus @default(DRAFT)
+  issueDate   DateTime      @default(now())
+  dueDate     DateTime
+  amount      Float
+  taxRate     Float         @default(0)
+  taxAmount   Float         @default(0)
+  totalAmount Float
+  notes       String?
+  pdfUrl      String?
+
+  professorId String
+  professor   User          @relation("ProfessorInvoices", fields: [professorId], references: [id], onDelete: Cascade)
+
+  clientId    String
+  client      User          @relation("ClientInvoices", fields: [clientId], references: [id], onDelete: Cascade)
+
+  courses     Course[]
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([professorId])
+  @@index([clientId])
+  @@index([status])
+  @@index([invoiceNumber])
+}
+
+model Quote {
+  id          String   @id @default(cuid())
+  quoteNumber String   @unique
+  issueDate   DateTime @default(now())
+  validUntil  DateTime
+  amount      Float
+  taxRate     Float    @default(0)
+  taxAmount   Float    @default(0)
+  totalAmount Float
+  description String
+  notes       String?
+  pdfUrl      String?
+  accepted    Boolean  @default(false)
+
+  professorId String
+  professor   User     @relation("ProfessorQuotes", fields: [professorId], references: [id], onDelete: Cascade)
+
+  clientId    String
+  client      User     @relation("ClientQuotes", fields: [clientId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([professorId])
+  @@index([clientId])
+  @@index([quoteNumber])
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  content    String
+  read       Boolean  @default(false)
+
+  senderId   String
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+
+  receiverId String
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime @default(now())
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([createdAt])
+}
