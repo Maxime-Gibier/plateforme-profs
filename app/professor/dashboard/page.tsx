@@ -33,6 +33,30 @@ export default function ProfessorDashboard() {
   const [allCourses, setAllCourses] = useState<any[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<any | null>(null);
 
+  const getCourseStatusColor = (status: string) => {
+    switch (status) {
+      case "COMPLETED":
+        return {
+          border: "border-l-green-500",
+          borderHover: "hover:border-l-green-600",
+          badge: "bg-green-50 text-green-700 hover:bg-green-100",
+        };
+      case "CANCELLED":
+        return {
+          border: "border-l-red-500",
+          borderHover: "hover:border-l-red-600",
+          badge: "bg-red-50 text-red-700 hover:bg-red-100",
+        };
+      case "SCHEDULED":
+      default:
+        return {
+          border: "border-l-blue-500",
+          borderHover: "hover:border-l-blue-600",
+          badge: "bg-blue-50 text-blue-700 hover:bg-blue-100",
+        };
+    }
+  };
+
   const loadData = () => {
     // Charger les statistiques
     fetch("/api/professor/stats")
@@ -169,20 +193,22 @@ export default function ProfessorDashboard() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {upcomingCourses.map((course) => (
-                    <Card
-                      key={course.id}
-                      className="hover:shadow-md transition-all cursor-pointer border-l-4 border-l-blue-500 hover:border-l-blue-600"
-                      onClick={() => setSelectedCourse(course)}
-                    >
-                      <CardContent className="flex items-center justify-between p-5">
-                        <div className="flex-1 space-y-2">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-semibold text-gray-900 text-lg">{course.title}</h3>
-                            <Badge variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-100">
-                              {course.subject}
-                            </Badge>
-                          </div>
+                  {upcomingCourses.map((course) => {
+                    const colors = getCourseStatusColor(course.status);
+                    return (
+                      <Card
+                        key={course.id}
+                        className={`hover:shadow-md transition-all cursor-pointer border-l-4 ${colors.border} ${colors.borderHover}`}
+                        onClick={() => setSelectedCourse(course)}
+                      >
+                        <CardContent className="flex items-center justify-between p-5">
+                          <div className="flex-1 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-semibold text-gray-900 text-lg">{course.title}</h3>
+                              <Badge variant="secondary" className={colors.badge}>
+                                {course.subject}
+                              </Badge>
+                            </div>
                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
                             <span className="flex items-center gap-1.5">
                               <Users className="h-4 w-4" />
@@ -209,8 +235,9 @@ export default function ProfessorDashboard() {
                           <ArrowRight className="h-5 w-5 text-gray-400" />
                         </div>
                       </CardContent>
-                    </Card>
-                  ))}
+                      </Card>
+                    );
+                  })}
                 </div>
               )}
             </TabsContent>

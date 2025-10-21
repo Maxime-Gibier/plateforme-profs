@@ -22,6 +22,7 @@ export default function CoursesPage() {
   const [courseDraft, setCourseDraft] = useState<any | null>(null);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [clients, setClients] = useState<any[]>([]);
+  const [activeView, setActiveView] = useState<string>("list");
 
   const loadCourses = () => {
     // Charger tous les cours (pas seulement à venir)
@@ -150,7 +151,7 @@ export default function CoursesPage() {
           <CardTitle className="text-2xl">Tous mes cours</CardTitle>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="list" className="space-y-6">
+          <Tabs defaultValue="list" onValueChange={setActiveView} className="space-y-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <TabsList className="w-full md:w-auto grid grid-cols-3">
                 <TabsTrigger value="list" className="gap-2">
@@ -167,59 +168,51 @@ export default function CoursesPage() {
                 </TabsTrigger>
               </TabsList>
 
-              {/* Status Filters */}
-              <div className="flex gap-2 flex-wrap">
-                <button
-                  onClick={() => setSelectedFilter("all")}
-                  className={`px-4 py-2 text-sm rounded-lg transition-all font-medium ${
-                    selectedFilter === "all"
-                      ? "bg-blue-600 text-white shadow-md"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow"
-                  }`}
-                >
-                  Tous ({stats.total})
-                </button>
-                <button
-                  onClick={() => setSelectedFilter("toplan")}
-                  className={`px-4 py-2 text-sm rounded-lg transition-all font-medium ${
-                    selectedFilter === "toplan"
-                      ? "bg-orange-600 text-white shadow-md"
-                      : "bg-orange-100 text-orange-700 hover:bg-orange-200 hover:shadow"
-                  }`}
-                >
-                  À planifier ({stats.toplan})
-                </button>
-                <button
-                  onClick={() => setSelectedFilter("upcoming")}
-                  className={`px-4 py-2 text-sm rounded-lg transition-all font-medium ${
-                    selectedFilter === "upcoming"
-                      ? "bg-green-600 text-white shadow-md"
-                      : "bg-green-100 text-green-700 hover:bg-green-200 hover:shadow"
-                  }`}
-                >
-                  À venir ({stats.upcoming})
-                </button>
-                <button
-                  onClick={() => setSelectedFilter("completed")}
-                  className={`px-4 py-2 text-sm rounded-lg transition-all font-medium ${
-                    selectedFilter === "completed"
-                      ? "bg-purple-600 text-white shadow-md"
-                      : "bg-purple-100 text-purple-700 hover:bg-purple-200 hover:shadow"
-                  }`}
-                >
-                  Terminés ({stats.completed})
-                </button>
-                <button
-                  onClick={() => setSelectedFilter("scheduled")}
-                  className={`px-4 py-2 text-sm rounded-lg transition-all font-medium ${
-                    selectedFilter === "scheduled"
-                      ? "bg-blue-600 text-white shadow-md"
-                      : "bg-blue-100 text-blue-700 hover:bg-blue-200 hover:shadow"
-                  }`}
-                >
-                  Planifiés ({stats.scheduled})
-                </button>
-              </div>
+              {/* Status Filters - Only show in list view */}
+              {activeView === "list" && (
+                <div className="flex gap-2 flex-wrap">
+                  <button
+                    onClick={() => setSelectedFilter("all")}
+                    className={`px-4 py-2 text-sm rounded-lg transition-all font-medium ${
+                      selectedFilter === "all"
+                        ? "bg-gray-600 text-white shadow-md"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow"
+                    }`}
+                  >
+                    Tous ({stats.total})
+                  </button>
+                  <button
+                    onClick={() => setSelectedFilter("toplan")}
+                    className={`px-4 py-2 text-sm rounded-lg transition-all font-medium ${
+                      selectedFilter === "toplan"
+                        ? "bg-orange-600 text-white shadow-md"
+                        : "bg-orange-100 text-orange-700 hover:bg-orange-200 hover:shadow"
+                    }`}
+                  >
+                    À planifier ({stats.toplan})
+                  </button>
+                  <button
+                    onClick={() => setSelectedFilter("upcoming")}
+                    className={`px-4 py-2 text-sm rounded-lg transition-all font-medium ${
+                      selectedFilter === "upcoming"
+                        ? "bg-blue-600 text-white shadow-md"
+                        : "bg-blue-100 text-blue-700 hover:bg-blue-200 hover:shadow"
+                    }`}
+                  >
+                    À venir ({stats.upcoming})
+                  </button>
+                  <button
+                    onClick={() => setSelectedFilter("completed")}
+                    className={`px-4 py-2 text-sm rounded-lg transition-all font-medium ${
+                      selectedFilter === "completed"
+                        ? "bg-green-600 text-white shadow-md"
+                        : "bg-green-100 text-green-700 hover:bg-green-200 hover:shadow"
+                    }`}
+                  >
+                    Terminés ({stats.completed})
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* List View */}

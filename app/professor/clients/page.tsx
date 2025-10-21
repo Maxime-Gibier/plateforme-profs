@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { User, Mail, Phone, BookOpen, Calendar, DollarSign, GraduationCap, Plus, X, Edit2, Save } from "lucide-react";
+import { User, Mail, Phone, BookOpen, Calendar, DollarSign, GraduationCap, Plus, X, Edit2, Save, CalendarPlus } from "lucide-react";
+import { CreateCourseModal } from "@/components/courses/create-course-modal";
 
 interface Client {
   id: string;
@@ -35,6 +36,9 @@ export default function ClientsPage() {
   const [isAddingClient, setIsAddingClient] = useState(false);
   const [isEditingClient, setIsEditingClient] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
+  const [courseClientId, setCourseClientId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -129,6 +133,15 @@ export default function ClientsPage() {
     }
   };
 
+  // Filtrer les clients selon la recherche
+  const filteredClients = clients.filter((client) => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    const fullName = `${client.firstName} ${client.lastName}`.toLowerCase();
+    const email = client.email.toLowerCase();
+    return fullName.includes(query) || email.includes(query);
+  });
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -210,22 +223,39 @@ export default function ClientsPage() {
       {/* Clients List */}
       <Card className="border-blue-100">
         <CardHeader>
-          <CardTitle className="text-2xl">Liste des clients</CardTitle>
+          <div className="flex items-center justify-between gap-4">
+            <CardTitle className="text-2xl">Liste des clients</CardTitle>
+            <div className="relative w-full max-w-sm">
+              <input
+                type="text"
+                placeholder="Rechercher un client..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              />
+              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          {clients.length === 0 ? (
+          {filteredClients.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <div className="rounded-full bg-blue-50 p-4 mb-4">
                 <User className="h-10 w-10 text-blue-600" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucun client</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {searchQuery ? "Aucun client trouvé" : "Aucun client"}
+              </h3>
               <p className="text-sm text-muted-foreground max-w-sm">
-                Commencez par ajouter votre premier client
+                {searchQuery
+                  ? "Essayez une autre recherche"
+                  : "Commencez par ajouter votre premier client"
+                }
               </p>
             </div>
           ) : (
             <div className="space-y-3">
-              {clients.map((client) => (
+              {filteredClients.map((client) => (
                 <Card
                   key={client.id}
                   className="hover:shadow-md transition-all cursor-pointer border-l-4 border-l-blue-500 hover:border-l-blue-600 relative"
@@ -258,10 +288,25 @@ export default function ClientsPage() {
                         <div className="h-14 w-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md">
                           <User className="h-7 w-7 text-white" />
                         </div>
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-900">
-                            {client.firstName} {client.lastName}
-                          </h3>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="text-lg font-semibold text-gray-900">
+                              {client.firstName} {client.lastName}
+                            </h3>
+                            {client.subjects.slice(0, 2).map((subject) => (
+                              <span
+                                key={subject}
+                                className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800"
+                              >
+                                {subject}
+                              </span>
+                            ))}
+                            {client.subjects.length > 2 && (
+                              <span className="text-xs text-gray-500">
+                                +{client.subjects.length - 2}
+                              </span>
+                            )}
+                          </div>
                           <div className="flex items-center gap-4 mt-1.5 text-sm text-muted-foreground flex-wrap">
                             <span className="flex items-center gap-1.5">
                               <Mail className="h-4 w-4" />
@@ -276,23 +321,6 @@ export default function ClientsPage() {
                           </div>
                         </div>
                       </div>
-
-                      {/* Subjects */}
-                      {client.subjects.length > 0 && (
-                        <div className="flex items-center gap-2 mb-3">
-                          <GraduationCap className="h-4 w-4 text-gray-500" />
-                          <div className="flex flex-wrap gap-2">
-                            {client.subjects.map((subject) => (
-                              <span
-                                key={subject}
-                                className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700 border border-blue-200"
-                              >
-                                {subject}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
 
                       {/* Next Course */}
                       {client.nextCourse ? (
@@ -718,7 +746,17 @@ export default function ClientsPage() {
             </div>
 
             {/* Footer */}
-            <div className="bg-gray-50 border-t border-gray-200 px-6 py-4 flex justify-end">
+            <div className="bg-gray-50 border-t border-gray-200 px-6 py-4 flex justify-between">
+              <button
+                onClick={() => {
+                  setCourseClientId(selectedClient.id);
+                  setShowCreateCourseModal(true);
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <CalendarPlus className="h-4 w-4" />
+                Créer un cours
+              </button>
               <button
                 onClick={() => setSelectedClient(null)}
                 className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
@@ -728,6 +766,22 @@ export default function ClientsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Create Course Modal */}
+      {showCreateCourseModal && (
+        <CreateCourseModal
+          onClose={() => {
+            setShowCreateCourseModal(false);
+            setCourseClientId(null);
+          }}
+          onSuccess={() => {
+            setShowCreateCourseModal(false);
+            setCourseClientId(null);
+            loadClients();
+          }}
+          preselectedClientId={courseClientId}
+        />
       )}
     </div>
   );
